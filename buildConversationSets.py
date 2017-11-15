@@ -23,7 +23,6 @@ def getDate(inputStr):
     return date(int(postYear), int(postMonth), int(postDay))
 
 for n in range(1, 14):
-    print('opening ' + str(n) + 'dayConversations.txt')
     conversationsFile = open(str(n) + 'dayConversations.txt', 'w')
     lineNumber = 0
     numberOfSets = 0
@@ -32,7 +31,7 @@ for n in range(1, 14):
         postArray = line.split('\t')
         postDate = getDate(postArray[0])
         postID = postArray[1]
-        print('working on post ' + postID)
+        print('working on post ' + postID + ', ' + str(n) + ' days')
         postLabel = labelMap[postID]
         postUser = postArray[2]
         # see if we've already built a conversation set for this user
@@ -50,13 +49,11 @@ for n in range(1, 14):
         while(True):
             potentialReply = postsFile[lineNumber + searchDistance].split('\t')
             if (getDate(potentialReply[0]) - postDate).days > n:
-                print('......past ' + str(n) + ' days')
                 break
             if potentialReply[2] == postUser:
                 searchDistance += 1
                 continue
             if postUser in potentialReply[3]:
-                print('......found reply in post ' + potentialReply[1])
                 repliesFound += 1
                 replyText = replyText + ' ' + potentialReply[4][:-1]
             searchDistance += 1
@@ -65,7 +62,6 @@ for n in range(1, 14):
             numberOfSets += 1
             # still need to find the target user's next post and append that label on here too
             conversationsFile.write(postID + '\t' + postLabel + '\t' + replyText + '\n')
-            print(postID + '\t' + replyText)
         lineNumber += 1
     conversationsFile.write('number of sets = ' + str(numberOfSets))
     conversationsFile.close()
