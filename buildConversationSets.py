@@ -6,9 +6,10 @@ labelsFile = open('labels.txt', 'r')
 labelMap = {}
 for line in labelsFile:
     lineArray = line.split('\t')
-    if lineArray[1] == 'green':
+    label = ''
+    if lineArray[1] == 'green\n':
         label = 'green'
-    elif lineArray[1] == 'amber' or lineArray[1] == 'red' or lineArray[1] == 'crisis':
+    elif lineArray[1] == 'amber\n' or lineArray[1] == 'red\n' or lineArray[1] == 'crisis\n':
         label = 'flagged'
     labelMap[lineArray[0]] = label
 labelsFile.close()
@@ -57,7 +58,7 @@ for n in range(1, 14):
             if postUser in potentialReply[3]:
                 print('......found reply in post ' + potentialReply[1])
                 repliesFound += 1
-                replyText = replyText + ' ' + potentialReply[4]
+                replyText = replyText + ' ' + potentialReply[4][:-1]
             searchDistance += 1
         # only write a line to the file if we actually found a conversation
         if repliesFound > 0:
