@@ -13,9 +13,12 @@ postsFile = open('posts.txt', 'w')
 
 # normalize and cleanup tokens that could be usernames
 def parseUsername(input):
-        inputLower = input.lower()
-        inputLowerClean = re.sub(r'[^a-z0-9]', '', inputLower)
-        return inputLowerClean
+    inputLower = input.lower()
+    inputLowerClean = re.sub(r'[^a-z0-9]', '', inputLower)
+    # handle the one edge case of username "__"
+    if inputLowerClean == '':
+        inputLowerClean = input
+    return inputLowerClean
 
 # create a list to check against as we extract usernames from text
 for dirName, subdirList, fileList in os.walk('posts'):

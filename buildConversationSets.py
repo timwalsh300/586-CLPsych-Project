@@ -23,20 +23,27 @@ def getDate(inputStr):
     return date(int(postYear), int(postMonth), int(postDay))
 
 for n in range(1, 14):
+    print('working on ' + str(n) + '-day conversations')
     conversationsFile = open(str(n) + 'dayConversations.txt', 'w')
     lineNumber = 0
     numberOfSets = 0
     statesCaptured = []
     for line in postsFile:
+        if lineNumber == 63184:
+            # stop when we get here to make sure we don't run off the end of the dataset while looking for replies
+            break
         postArray = line.split('\t')
         postDate = getDate(postArray[0])
         postID = postArray[1]
-        print('working on post ' + postID + ', ' + str(n) + ' days')
-        postLabel = labelMap[postID]
+        if postID in labelMap:
+            postLabel = labelMap[postID]
+        else:
+            postLabel = '?'
         postUser = postArray[2]
         # see if we've already built a conversation set for this user
         # beginning on this day, and skip it if so
         if (postUser + ' ' + postDate.isoformat()) in statesCaptured:
+            lineNumber += 1
             continue
         # if not, record the new user on this day
         statesCaptured.append(postUser + ' ' + postDate.isoformat())
