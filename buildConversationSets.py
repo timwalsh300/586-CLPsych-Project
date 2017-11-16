@@ -22,15 +22,16 @@ def getDate(inputStr):
     postDay = inputStr[8:10]
     return date(int(postYear), int(postMonth), int(postDay))
 
-for n in range(1, 14):
+for n in range(1, 15):
     print('working on ' + str(n) + '-day conversations')
     conversationsFile = open(str(n) + 'dayConversations.txt', 'w')
     lineNumber = 0
     numberOfSets = 0
     statesCaptured = []
     for line in postsFile:
-        if lineNumber == 63184:
-            # stop when we get here to make sure we don't run off the end of the dataset while looking for replies
+        if lineNumber == 63064:
+            # stop when we get here (14 days before the end of the dataset) to make sure
+            # we don't run off the end of the dataset while looking for replies
             break
         postArray = line.split('\t')
         postDate = getDate(postArray[0])
@@ -72,5 +73,3 @@ for n in range(1, 14):
         lineNumber += 1
     conversationsFile.write('number of sets = ' + str(numberOfSets))
     conversationsFile.close()
-
-postsFile.close()
