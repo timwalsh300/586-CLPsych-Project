@@ -71,5 +71,5 @@ for key, value in conversationSets.items():
     keyArray = key.split(' ')
     # only write to the file if we found replies and a nextPostLabel
     if value[1] != '' and value[2] != '?':
-        conversationsFile.write(keyArray[0] + '\t' + keyArray[1] + '\t' + value[0] + '\t' + value[1] + '\t' + value[2] + '\n')
+        conversationsFile.write(value[0] + '\t' + value[1] + '\t' + value[2] + '\n')
 conversationsFile.close()
