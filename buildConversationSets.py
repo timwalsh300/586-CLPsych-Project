@@ -94,8 +94,8 @@ for n in range(1, 15):
         # only write to the file if we found a nextPostLabel
         if value[2] != '?':
             if value[1] != '':
-                conversationsFile.write(keyArray[0] + '\t' + keyArray[1] + '\t' + value[0] + '\t' + value[1] + '\t' + value[2] + '\n')
+                conversationsFile.write(value[0] + '\t' + value[1] + '\t' + value[2] + '\n')
             else:
                 # intentionally keeping the cases where we found no replies
-                conversationsFile.write(keyArray[0] + '\t' + keyArray[1] + '\t' + value[0] + '\t...no replies found...\t' + value[2] + '\n')
+                conversationsFile.write(value[0] + '\t...noRepliesFound...\t' + value[2] + '\n')
     conversationsFile.close()
