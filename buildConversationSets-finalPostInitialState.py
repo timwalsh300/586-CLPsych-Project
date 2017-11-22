@@ -29,7 +29,7 @@ def getDate(inputStr):
 # iterate through all the posts and potential replies for each value of N days
 for n in range(1, 15):
     # this will contain 'postUser date': [postLabel, replyText, nextPostLabel]
-    # where postLabel is 'flagged' if any post on that date was 'flagged', and
+    # where postLabel is the label of the user's last post in a given day, and
     # nextPostLabel is the label of the user's next post after n days
     conversationSets = {}
     print('working on ' + str(n) + '-day conversations')
@@ -49,10 +49,9 @@ for n in range(1, 15):
         postUser = postArray[2]
         userState = postUser + ' ' + postDate.isoformat()
         # see if we've already built a conversation set for this user
-        # beginning on this day, and skip it if so, but elevate label if appropriate
+        # beginning on this day, and skip it if so, but update the initial state label
         if userState in conversationSets:
-            if conversationSets[userState][0] == 'green' and postLabel == 'flagged':
-                conversationSets[userState][0] = 'flagged'
+            conversationSets[userState][0] = postLabel
             lineNumber += 1
             continue
         else: # if not, record the new user on this day
