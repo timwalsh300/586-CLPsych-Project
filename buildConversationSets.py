@@ -101,7 +101,7 @@ for n in range(1, 15):
             searchDistance += 1
         lineNumber += 1
     # write the results for this value of N to a file
-    conversationsFile = open(str(n) + 'dayConversations-finalPostInitialState.txt', 'w')
+    conversationsFile = open(str(n) + 'dayConversations.txt', 'w')
     greenToFlagged = 0
     greenToFlaggedNoReplies = 0
     flaggedToFlagged = 0
