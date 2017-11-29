@@ -20,7 +20,15 @@ def parseUsername(input):
         inputLowerClean = input
     return inputLowerClean
 
-# create a list to check against as we extract usernames from text
+# create a list of all the moderator ID numbers to reference later when we filter
+ranks = open('author_rankings.tsv', 'r').readlines()
+modsList = []
+for line in ranks:
+    lineTokens = line.split('\t')
+    if 'Mod' in lineTokens[1] or 'Crew' in lineTokens[1] or 'Staff' in lineTokens[1]:
+        modsList.append(lineTokens[0])
+
+# create a list of all simplified usernames to check against as we extract usernames from text
 for dirName, subdirList, fileList in os.walk('posts'):
     for fname in fileList:
         tree = ET.parse('posts/' + fname)
@@ -52,6 +60,11 @@ for dirName, subdirList, fileList in os.walk('posts'):
         if id is None:
             continue
         time = message.find('post_time').text
+        authorID = message.find('author').get('href')[10:]
+        if authorID in modsList:
+            modBoolean = 'T'
+        else:
+            modBoolean = 'F'
         login = message.find('author')[0].text
         simplifiedLogin = parseUsername(login.split()[0])
         rawBody = message.find('body').text
@@ -90,7 +103,7 @@ for dirName, subdirList, fileList in os.walk('posts'):
         finalTextBody = ' '.join(htmlRemovedQuotesRemovedBodyTokens)
 
         # put it all together
-        postString = time + '\t' + id + '\t' + simplifiedLogin + '\t[' + quotedUsers + ']\t' + finalTextBody
+        postString = time + '\t' + id + '\t' + simplifiedLogin + '\t[' + quotedUsers + ']\t' + finalTextBody + '\t' + modBoolean
         postsList.append(postString)
 
 postsList.sort()
