@@ -1,6 +1,7 @@
-# This program constructs the conversation sets for parameter N = 1 to n
+# This program constructs the conversation sets for parameter N = 1 to 14
 
 from datetime import date, timedelta
+import re
 
 # this gets Arman's predicted labels for each post
 labelsFile = open('labels.txt', 'r')
@@ -28,9 +29,9 @@ def getDate(inputStr):
 
 # iterate through all the posts and potential replies for each value of N days
 for n in range(1, 15):
-    # this will contain 'postUser date': [postLabel, replyText, nextPostLabel]
-    # where postLabel is flagged if >= 50% of a user's posts in a given day are flagged,
-    # and nextPostLabel is the label of the user's next post after n days
+    # this will contain 'postUser date': [postLabel, replyText, nextPostLabel, numReplies, numModReplies]
+    # where postLabel is 'flagged' if any post on that date was 'flagged', and
+    # nextPostLabel is the label of the user's next post after n days
     conversationSets = {}
     print('working on ' + str(n) + '-day conversations')
     lineNumber = 0
@@ -40,6 +41,11 @@ for n in range(1, 15):
             # we don't run off the end of the dataset while looking for replies and next posts
             break
         postArray = line.split('\t')
+        # check if this post is by a moderator, and if so skip building a conversation set on it;
+        # assume that moderators are not users of interest and just flood the data with greenToGreen cases
+        if postArray[5] == 'T\n':
+            lineNumber += 1
+            continue
         postDate = getDate(postArray[0])
         postID = postArray[1]
         if postID in labelMap:
@@ -52,18 +58,20 @@ for n in range(1, 15):
         # beginning on this day, and skip it if so, but increment the label
         if userState in conversationSets:
             if postLabel == 'green':
-                conversationSets[userState][3] += 1
+                conversationSets[userState][5] += 1
             elif postLabel == 'flagged':
-                conversationSets[userState][4] += 1
+                conversationSets[userState][6] += 1
             lineNumber += 1
             continue
         else: # if not, record the new user on this day
             if postLabel == 'flagged':
-                conversationSets[userState] = ['?', '', '?', 0, 1]
+                conversationSets[userState] = ['?', '', '?', 0, 0, 0, 1]
             else: # postLabel == 'green' or '?'
-                conversationSets[userState] = ['?', '', '?', 1, 0]
+                conversationSets[userState] = ['?', '', '?', 0, 0, 1, 0]
         # string to append text of replies to this user as we find them
         replyText = ''
+        numReplies = 0
+        numModReplies = 0
         # increment this variable to look at posts beyond the target user post
         searchDistance = 1
         # iterate through all subsequent posts for the next n days looking for replies
@@ -75,9 +83,14 @@ for n in range(1, 15):
                 searchDistance += 1
                 continue
             if postUser in potentialReply[3]:
-                replyText = replyText + ' ' + potentialReply[4][:-1]
+                replyText = replyText + ' ' + potentialReply[4]
+                numReplies += 1
+                if potentialReply[5] == 'T\n':
+                    numModReplies += 1
             searchDistance += 1
         conversationSets[userState][1] = replyText
+        conversationSets[userState][3] = numReplies
+        conversationSets[userState][4] = numModReplies
         # find the user's next reply after N days and get that label
         searchDistance = 1
         while(True):
@@ -93,37 +106,53 @@ for n in range(1, 15):
             searchDistance += 1
         lineNumber += 1
     # write the results for this value of N to a file
-    conversationsFile = open(str(n) + 'dayConversations-thresholdInitialState.txt', 'w')
+    conversationsFile = open(str(n) + 'dayConversations.txt', 'w')
     greenToFlagged = 0
+    greenToFlaggedNoReplies = 0
     flaggedToFlagged = 0
+    flaggedToFlaggedNoReplies = 0
     flaggedToGreen = 0
+    flaggedToGreenNoReplies = 0
     greenToGreen = 0
+    greenToGreenNoReplies = 0
     noRepliesFound = 0
     for key, value in conversationSets.items():
         keyArray = key.split(' ')
-        if (value[4] / (value[3] + value[4])) >= 0.5:
+        if (value[6] / (value[5] + value[6])) >= 0.5:
             initialStateLabel = 'flagged'
         else:
             initialStateLabel = 'green'
         if initialStateLabel == 'green' and value[2] == 'flagged':
             greenToFlagged += 1
+            if value[1] == '':
+                greenToFlaggedNoReplies += 1
         if initialStateLabel == 'flagged' and value[2] == 'flagged':
             flaggedToFlagged += 1
+            if value[1] == '':
+                flaggedToFlaggedNoReplies += 1
         if initialStateLabel == 'flagged' and value[2] == 'green':
             flaggedToGreen += 1
+            if value[1] == '':
+                flaggedToGreenNoReplies += 1
         if initialStateLabel == 'green' and value[2] == 'green':
             greenToGreen += 1
+            if value[1] == '':
+                greenToGreenNoReplies += 1
         # only write to the file if we found a nextPostLabel
         if value[2] != '?':
             if value[1] != '':
-                conversationsFile.write(initialStateLabel + '\t' + value[1] + '\t' + value[2] + '\n')
+                conversationsFile.write(initialStateLabel + '\t' + value[1] + '\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\n')
             else:
                 # intentionally keeping the cases where we found no replies
-                conversationsFile.write(initialStateLabel + '\t...noRepliesFound...\t' + value[2] + '\n')
+                conversationsFile.write(initialStateLabel + '\t...noRepliesFound...\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\n')
                 noRepliesFound += 1
-    print('green to flagged: ' + str(greenToFlagged))
-    print('flagged to flagged: ' + str(flaggedToFlagged))
-    print('flagged to green: ' + str(flaggedToGreen))
-    print('green to green: ' + str(greenToGreen))
-    print('no replies found: ' + str(noRepliesFound))
+    print('\tgreen to flagged: ' + str(greenToFlagged))
+    print('\t\tno replies: ' + str(100 * (greenToFlaggedNoReplies / greenToFlagged)) + '%')
+    print('\tflagged to flagged: ' + str(flaggedToFlagged))
+    print('\t\tno replies: ' + str(100 * (flaggedToFlaggedNoReplies / flaggedToFlagged)) + '%')
+    print('\tflagged to green: ' + str(flaggedToGreen))
+    print('\t\tno replies: ' + str(100 * (flaggedToGreenNoReplies / flaggedToGreen)) + '%')
+    print('\tgreen to green: ' + str(greenToGreen))
+    print('\t\tno replies: ' + str(100 * (greenToGreenNoReplies / greenToGreen)) + '%')
+    print('\tno replies found: ' + str(noRepliesFound))
     conversationsFile.close()
