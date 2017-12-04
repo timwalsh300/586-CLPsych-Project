@@ -103,7 +103,7 @@ for dirName, subdirList, fileList in os.walk('posts'):
         finalTextBody = ' '.join(htmlRemovedQuotesRemovedBodyTokens)
 
         # put it all together
-        postString = time + '\t' + id + '\t' + simplifiedLogin + '\t[' + quotedUsers + ']\t' + finalTextBody + '\t' + modBoolean
+        postString = time + '\t' + id + '\t' + simplifiedLogin + '\t[' + quotedUsers + ']\t' + finalTextBody + '\t' + modBoolean + '\t' + login
         postsList.append(postString)
 
 postsList.sort()

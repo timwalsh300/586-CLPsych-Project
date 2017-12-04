@@ -53,6 +53,7 @@ for n in range(1, 15):
         else:
             postLabel = '?'
         postUser = postArray[2]
+        postFullUser = postArray[6][:-1]
         userState = postUser + ' ' + postDate.isoformat()
         # see if we've already built a conversation set for this user
         # beginning on this day, and skip it if so, but elevate label if appropriate
@@ -80,10 +81,12 @@ for n in range(1, 15):
             if postUser in potentialReply[3]:
                 replyText = replyText + ' ' + potentialReply[4]
                 numReplies += 1
-                if potentialReply[5] == 'T\n':
+                if potentialReply[5] == 'T':
                     numModReplies += 1
             searchDistance += 1
-        conversationSets[userState][1] = replyText
+        replyText1 = re.sub(postFullUser, '', replyText, 0, re.S)
+        replyText2 = re.sub(postUser, '', replyText1, 0, re.S)
+        conversationSets[userState][1] = replyText2
         conversationSets[userState][3] = numReplies
         conversationSets[userState][4] = numModReplies
         # find the user's next reply after N days and get that label
