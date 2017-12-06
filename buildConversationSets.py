@@ -2,6 +2,7 @@
 
 from datetime import date, timedelta
 import re
+from textblob import TextBlob
 
 # this gets Arman's predicted labels for each post
 labelsFile = open('labels.txt', 'r')
@@ -17,6 +18,13 @@ for line in labelsFile:
     labelMap[lineArray[0]] = label
 labelsFile.close()
 
+# grab some user metadata from here
+metaData = open('userMetadata.txt', 'r').readlines()
+userRiskLevels = {}
+for line in metaData:
+    lineTokens = line.split('\t')
+    userRiskLevels[lineTokens[0]] = float(lineTokens[4])
+
 # this contains the dataset after stage 1 preprocessing (combinePosts.py)
 postsFile = open('posts.txt', 'r').readlines()
 
@@ -29,7 +37,7 @@ def getDate(inputStr):
 
 # iterate through all the posts and potential replies for each value of N days
 for n in range(1, 15):
-    # this will contain 'postUser date': [postLabel, replyText, nextPostLabel, numReplies, numModReplies]
+    # this will contain 'postUser date': [postLabel, replyText, nextPostLabel, numReplies, numModReplies, targetUserPosts, replyPosterRiskAvg, replyPolarity, replySubjectivity]
     # where postLabel is 'flagged' if any post on that date was 'flagged', and
     # nextPostLabel is the label of the user's next post after n days
     conversationSets = {}
@@ -63,11 +71,15 @@ for n in range(1, 15):
             lineNumber += 1
             continue
         else: # if not, record the new user on this day
-            conversationSets[userState] = [postLabel, '', '?', 0, 0]
+            conversationSets[userState] = [postLabel, '', '?', 0, 0, 0, 0.07, 0.0, 0.0]
         # string to append text of replies to this user as we find them
         replyText = ''
         numReplies = 0
         numModReplies = 0
+        # this captures the activity level of the target user over the N day period
+        targetUserPosts = 0
+        # sum up risk levels of reply posters (based on % of their posts that are flagged)
+        replyPosterRisk = 0
         # increment this variable to look at posts beyond the target user post
         searchDistance = 1
         # iterate through all subsequent posts for the next n days looking for replies
@@ -76,11 +88,17 @@ for n in range(1, 15):
             if (getDate(potentialReply[0]) - postDate).days > n:
                 break
             if potentialReply[2] == postUser:
+                targetUserPosts += 1
                 searchDistance += 1
                 continue
             if postUser in potentialReply[3]:
                 replyText = replyText + ' ' + potentialReply[4]
                 numReplies += 1
+                if potentialReply[2] in userRiskLevels:
+                    replyPosterRisk += userRiskLevels[potentialReply[2]]
+                else:
+                    # give it the % for the forum as a whole to be neutral
+                    replyPosterRisk += 0.07
                 if potentialReply[5] == 'T':
                     numModReplies += 1
             searchDistance += 1
@@ -89,6 +107,12 @@ for n in range(1, 15):
         conversationSets[userState][1] = replyText2
         conversationSets[userState][3] = numReplies
         conversationSets[userState][4] = numModReplies
+        conversationSets[userState][5] = targetUserPosts
+        if numReplies > 0:
+            conversationSets[userState][6] = replyPosterRisk / numReplies
+            blob = TextBlob(replyText2)
+            conversationSets[userState][7] = blob.sentiment.polarity
+            conversationSets[userState][8] = blob.sentiment.subjectivity
         # find the user's next reply after N days and get that label
         searchDistance = 1
         while(True):
@@ -135,10 +159,11 @@ for n in range(1, 15):
         # only write to the file if we found a nextPostLabel
         if value[2] != '?':
             if value[1] != '':
-                conversationsFile.write(value[0] + '\t' + value[1] + '\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\n')
+                conversationsFile.write(value[0] + '\t' + value[1] + '\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\t' + str(value[5]) + '\t' + str(value[6]) + '\t' + str(value[7]) + '\t' + str(value[8]) + '\n')
             else:
                 # intentionally keeping the cases where we found no replies
-                conversationsFile.write(value[0] + '\t...noRepliesFound...\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\n')
+                conversationsFile.write(value[0] + '\t...noRepliesFound...\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\t' + str(value[5]) + '\t' + str(value[6]) + '\t' + 
+str(value[7]) + '\t' + str(value[8]) + '\n')
                 noRepliesFound += 1
     print('\tgreen to flagged: ' + str(greenToFlagged))
     print('\t\tno replies: ' + str(100 * (greenToFlaggedNoReplies / greenToFlagged)) + '%')

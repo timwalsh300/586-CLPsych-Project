@@ -2,6 +2,15 @@
 
 import os
 import xml.etree.ElementTree as ET
+import re
+
+def parseUsername(input):
+    inputLower = input.lower()
+    inputLowerClean = re.sub(r'[^a-z]', '', inputLower)
+    # handle a few edge cases where usernames have no letters
+    if inputLowerClean == '':
+        inputLowerClean = input
+    return inputLowerClean
 
 # this gets Arman's predicted labels for each post
 labelsFile = open('labels.txt', 'r')
@@ -61,10 +70,7 @@ for dirName, subdirList, fileList in os.walk('posts'):
             loginsList[login][1] += 1
             totalFlagged += 1
 
-loginsFile = open('logins.txt', 'w')
-loginsFile.write('total posts = ' + str(totalPosts) + '\n')
-loginsFile.write('total flagged = ' + str(totalFlagged) + '\n')
-loginsFile.write(str(100 * (totalFlagged / totalPosts)) + '% flagged\n')
+loginsFile = open('userMetadata.txt', 'w')
 for key, value in loginsList.items():
-    loginsFile.write(key + '\tmod = ' + value[2] + '\tposts = ' + str(value[0]) + '\tflagged = ' + str(value[1]) + '\t' + str(100 * (value[1]/value[0])) + '%\n')
+    loginsFile.write(parseUsername(key) + '\tmod = ' + value[2] + '\tposts = ' + str(value[0]) + '\tflagged = ' + str(value[1]) + '\t' + str(value[1] / value[0]) + '\n')
 loginsFile.close()
