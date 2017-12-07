@@ -3,6 +3,9 @@
 from datetime import date, timedelta
 import re
 from textblob import TextBlob
+from nltk import word_tokenize
+from nltk.corpus import stopwords
+stops = set(stopwords.words('english'))
 
 # this gets Arman's predicted labels for each post
 labelsFile = open('labels.txt', 'r')
@@ -104,15 +107,16 @@ for n in range(1, 15):
             searchDistance += 1
         replyText1 = re.sub(postFullUser, '', replyText, 0, re.S)
         replyText2 = re.sub(postUser, '', replyText1, 0, re.S)
-        conversationSets[userState][1] = replyText2
+        blob = TextBlob(replyText2)
         conversationSets[userState][3] = numReplies
         conversationSets[userState][4] = numModReplies
         conversationSets[userState][5] = targetUserPosts
         if numReplies > 0:
             conversationSets[userState][6] = replyPosterRisk / numReplies
-            blob = TextBlob(replyText2)
             conversationSets[userState][7] = blob.sentiment.polarity
             conversationSets[userState][8] = blob.sentiment.subjectivity
+        replyTextList = [i for i in word_tokenize(replyText2.lower()) if i not in stops]
+        conversationSets[userState][1] = ' '.join(replyTextList)
         # find the user's next reply after N days and get that label
         searchDistance = 1
         while(True):
