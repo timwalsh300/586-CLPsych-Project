@@ -48,6 +48,14 @@ def cat_to_int(cat):
             cat[i] = 0
     return cat
 
+def cat_to_boolean(cat):
+    for i in range(0, len(cat)):
+        if cat[i] == 'flagged':
+            cat[i] = True
+        else:
+            cat[i] = False
+    return cat
+
 def extract_all(file):
     # turn into numpy array
     file = np.array(file)
@@ -56,8 +64,7 @@ def extract_all(file):
     initials = cat_to_int(initials)[:,None]
     posts = file[:,1]
     labels = file[:,2]
-    labels = cat_to_int(labels)
-    labels = labels.astype(np.int)
+    labels = cat_to_boolean(labels)
     extra_features = file[:,3:]
     extra_features = np.hstack((initials, extra_features))
     extra_features = extra_features.astype(np.float32)
@@ -108,7 +115,7 @@ extractor = sklearn.feature_extraction.text.TfidfVectorizer(
     sublinear_tf=True,
     norm='l2',
     analyzer='word',
-    ngram_range=(1,1)
+    ngram_range=(1,3)
 )
 tfidf = extractor.fit_transform(posts)
 
