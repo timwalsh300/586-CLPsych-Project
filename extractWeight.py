@@ -40,16 +40,26 @@ def extract_initial_green(file):
     extra_features = extra_features.astype(np.float32)
     return labels, posts, extra_features
 
+def cat_to_int(cat):
+    for i in range(0, len(cat)):
+        if cat[i] == 'flagged':
+            cat[i] = 1
+        else:
+            cat[i] = 0
+    return cat
+
 def extract_all(file):
     # turn into numpy array
     file = np.array(file)
     # split
     initials = file[:,0]
+    initials = cat_to_int(initials)[:,None]
     posts = file[:,1]
     labels = file[:,2]
+    labels = cat_to_int(labels)
     labels = labels.astype(np.int)
     extra_features = file[:,3:]
-    extra_features = sparse.hstack((initials, extra_features))
+    extra_features = np.hstack((initials, extra_features))
     extra_features = extra_features.astype(np.float32)
     return labels, posts, extra_features
 
@@ -88,7 +98,7 @@ with open('./withExtraFeatures/' + '14dayConversations.txt') as f:
     reader = csv.reader(f, delimiter='\t')
     file = list(reader)
 
-labels, posts, extra_features = extract_initial_flagged(file)
+labels, posts, extra_features = extract_all(file)
 
 # extract tf-idf from from data
 extractor = sklearn.feature_extraction.text.TfidfVectorizer(
