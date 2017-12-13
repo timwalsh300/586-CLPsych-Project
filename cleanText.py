@@ -1,5 +1,5 @@
-# This program extracts and cleans all the post body text from the
-# dataset so we can start testing a classifier on BoW
+# This program extracts and cleans all the post body text from posts on the
+# SomethingsNotRight sub-forum so we can train a topic model
 
 import os
 import re
@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 
 postsList = []
-postsFile = open('bodyTextOnly.txt', 'w')
+postsFile = open('SomethingsNotRightTextOnly.txt', 'w')
 
 # process all the individual post XML files and create a single text file
 for dirName, subdirList, fileList in os.walk('posts'):
@@ -17,6 +17,9 @@ for dirName, subdirList, fileList in os.walk('posts'):
         if response.get('status') == 'error':
             continue
         message = response[0]
+        board = message.find('board').get('href')
+        if board != '/boards/id/Something_Not_Right':
+            continue
         id = message.find('id').text
         if id is None:
             continue
