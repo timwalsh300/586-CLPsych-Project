@@ -101,7 +101,7 @@ def print_flr(n, coefficients, feature_names):
 
 
 # read in id_label_body
-with open('./withExtraFeatures/' + '14dayConversations.txt') as f:
+with open('./stopwordsRemoved/' + '14dayConversations.txt') as f:
     reader = csv.reader(f, delimiter='\t')
     file = list(reader)
 
@@ -115,16 +115,16 @@ extractor = sklearn.feature_extraction.text.TfidfVectorizer(
     sublinear_tf=True,
     norm='l2',
     analyzer='word',
-    ngram_range=(1,3)
+    ngram_range=(1,1)
 )
 tfidf = extractor.fit_transform(posts)
 
 # append extra features to tfidf
-feature = sparse.hstack((tfidf, extra_features))
+features = sparse.hstack((tfidf, extra_features))
 
 # train and test a classifier; in this case, we use a linear SVM
 cl = sklearn.svm.SVC(kernel='linear')
-cl.fit(feature, labels)
+cl.fit(features, labels)
 
 # get the weights from classifier
 coefficients = cl.coef_
@@ -135,10 +135,17 @@ n_extra_features = len(extra_features[0])
 for i in range(1, n_extra_features + 1):
     feature_names.append('#extra_' + str(i) + '#')
 
-# get index for top 50
-print('\n' + "50 features with highest weight: ")
+# print weights for extra features
+print('\n' + 'Weights for extra features: ')
+e_n = len(feature_names)
+e_1 = e_n - n_extra_features
+for i in range(e_1, e_n):
+    print('extra ' + str(i - e_1 + 1) + ': ' + str(coefficients[0,i]))
+
+# print terms with highest weights
+print('\n' + '50 features with highest weight: ')
 print_flr(-50, coefficients, feature_names)
 
-# get index for floor 50
-print('\n' + "50 features with lowest weight: ")
+# print terms with lowest weights
+print('\n' + '50 features with lowest weight: ')
 print_top(50, coefficients, feature_names)
