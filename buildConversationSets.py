@@ -74,7 +74,7 @@ for n in range(1, 15):
             lineNumber += 1
             continue
         else: # if not, record the new user on this day
-            conversationSets[userState] = [postLabel, '', '?', 0, 0, 0, 0.07, 0.0, 0.0]
+            conversationSets[userState] = [postLabel, '', '?', 0, 0, 0, 0.07, 0.0, 0.5]
         # string to append text of replies to this user as we find them
         replyText = ''
         numReplies = 0
@@ -165,9 +165,7 @@ for n in range(1, 15):
             if value[1] != '':
                 conversationsFile.write(value[0] + '\t' + value[1] + '\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\t' + str(value[5]) + '\t' + str(value[6]) + '\t' + str(value[7]) + '\t' + str(value[8]) + '\n')
             else:
-                # intentionally keeping the cases where we found no replies
-                conversationsFile.write(value[0] + '\t...noRepliesFound...\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\t' + str(value[5]) + '\t' + str(value[6]) + '\t' + 
-str(value[7]) + '\t' + str(value[8]) + '\n')
+                # throw away cases where we found no replies
                 noRepliesFound += 1
     print('\tgreen to flagged: ' + str(greenToFlagged))
     print('\t\tno replies: ' + str(100 * (greenToFlaggedNoReplies / greenToFlagged)) + '%')
