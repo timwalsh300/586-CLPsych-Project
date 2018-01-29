@@ -76,7 +76,7 @@ for n in range(1, 15):
         else: # if not, record the new user on this day
             conversationSets[userState] = [postLabel, '', '?', 0, 0, 0, 0.07, 0.0, 0.5]
         # string to append text of replies to this user as we find them
-        replyText = ''
+        replyText = postID + ' '
         numReplies = 0
         numModReplies = 0
         # this captures the activity level of the target user over the N day period
@@ -124,6 +124,7 @@ for n in range(1, 15):
             if (getDate(potentialNextPost[0]) - postDate).days > n:
                 if potentialNextPost[2] == postUser:
                     if potentialNextPost[1] in labelMap:
+                        conversationSets[userState][1] += ' ' + str(potentialNextPost[1])
                         conversationSets[userState][2] = labelMap[potentialNextPost[1]]
                         break
             # give up on the search for the next post if it's been more than a week
@@ -162,7 +163,7 @@ for n in range(1, 15):
                 greenToGreenNoReplies += 1
         # only write to the file if we found a nextPostLabel
         if value[2] != '?':
-            if value[1] != '':
+            if value[3] > 0:
                 conversationsFile.write(value[0] + '\t' + value[1] + '\t' + value[2] + '\t' + str(value[3]) + '\t' + str(value[4]) + '\t' + str(value[5]) + '\t' + str(value[6]) + '\t' + str(value[7]) + '\t' + str(value[8]) + '\n')
             else:
                 # throw away cases where we found no replies
