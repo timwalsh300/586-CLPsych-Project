@@ -40,45 +40,14 @@ def extract_initial_green(file):
     extra_features = extra_features.astype(np.float32)
     return labels, posts, extra_features
 
-def cat_to_int(cat):
-    for i in range(0, len(cat)):
-        if cat[i] == 'flagged':
-            cat[i] = 1
-        else:
-            cat[i] = 0
-    return cat
 
-def round_up(probas):
-    labels = [0] * len(probas)
-    for i in range(len(probas)):
-        if probas[i][0] > probas[i][1]:
-            labels[i] = 0
-        else:
-            labels[i] = 1
-    return labels
-
-
-def extract_all(file):
-    # turn into numpy array
-    file = np.array(file)
-    # split
-    initials = file[:,0]
-    initials = cat_to_int(initials)[:,None]
-    posts = file[:,1]
-    labels = file[:,2]
-    labels = cat_to_int(labels)
-    labels = labels.astype(np.int)
-    extra_features = file[:,3:]
-    extra_features = np.hstack((initials, extra_features))
-    extra_features = extra_features.astype(np.float32)
-    return labels, ids, posts, extra_features
 
 for n in range(1, 15):
-    with open('./withID/' + str(n) + 'dayConversations.txt') as f:
+    with open('./stopwordsRemoved/' + str(n) + 'dayConversations.txt') as f:
         reader = csv.reader(f, delimiter='\t')
         file = list(reader)
 
-    labels, posts, extra_features = extract_all(file)
+    labels, posts, extra_features = extract_initial_green(file)
 
     # set up cross fold validation
     folds = sklearn.model_selection.StratifiedKFold(
@@ -119,22 +88,9 @@ for n in range(1, 15):
         feature_test = sparse.hstack((tfidf_test, extra_features_test))
 
         # train and test a classifier; in this case, we use a linear SVM
-        cl = sklearn.svm.SVC(kernel='linear', probability=True)
+        cl = sklearn.svm.SVC(kernel='linear')
         cl.fit(feature_train, labels_train)
-        labels_pred_proba = cl.predict_proba(feature_test)
-        labels_pred = round_up(labels_pred_proba)
-
-        # save for test set (one of the folds) true labels, predicted labels, and body
-        tpb = np.vstack((labels_test, labels_pred, labels_pred_proba[:,1], posts_test))
-        tpb = tpb.transpose()
-        tpb_list = tpb.tolist()
-        file_name = 'itr_' + str(n) + '_fold_' + str(i) + '.tsv'
-        with open(file_name, 'w') as file:
-            for row in tpb_list:
-                line = row[0] + '\t' + row[1] + '\t' + row[2] + '\t' + row[3] + '\n'
-                file.write(line)
-        file.close()
-
+        labels_pred = cl.predict(feature_test)
 
         # get accuracy, precision, recall, and F1 score on this fold
         acc = sklearn.metrics.accuracy_score(labels_test, labels_pred)
