@@ -115,7 +115,7 @@ for n in range(1, 15):
                 searchDistance += 1
                 continue
             if postUser in potentialReply[3]:
-                replyText = replyText + ' ' + potentialReply[4]
+                replyText = replyText + ' ' + potentialReply[2] + ' ' + potentialReply[4]
                 numReplies += 1
                 if potentialReply[2] in userRiskLevels:
                     replyPosterRisk += userRiskLevels[potentialReply[2]]
