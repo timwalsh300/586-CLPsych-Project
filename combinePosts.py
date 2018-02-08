@@ -65,6 +65,11 @@ for dirName, subdirList, fileList in os.walk('posts'):
             modBoolean = 'T'
         else:
             modBoolean = 'F'
+        thread = message.find('thread').get('href')
+        if thread == '/threads/id/1810':
+            negToPosBoolean = 'T'
+        else:
+            negToPosBoolean = 'F'
         login = message.find('author')[0].text
         simplifiedLogin = parseUsername(login.split()[0])
         rawBody = message.find('body').text
@@ -103,7 +108,7 @@ for dirName, subdirList, fileList in os.walk('posts'):
         finalTextBody = ' '.join(htmlRemovedQuotesRemovedBodyTokens)
 
         # put it all together
-        postString = time + '\t' + id + '\t' + simplifiedLogin + '\t[' + quotedUsers + ']\t' + finalTextBody + '\t' + modBoolean + '\t' + login
+        postString = time + '\t' + id + '\t' + simplifiedLogin + '\t[' + quotedUsers + ']\t' + finalTextBody + '\t' + modBoolean + '\t' + login + '\t' + negToPosBoolean
         postsList.append(postString)
 
 postsList.sort()

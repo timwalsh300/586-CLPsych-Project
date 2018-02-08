@@ -21,6 +21,14 @@ for line in labelsFile:
     labelMap[lineArray[0]] = label
 labelsFile.close()
 
+# this gets Arman's confidence values for each label
+confidenceFile = open('confidence.tsv', 'r')
+confidenceMap = {}
+for line in confidenceFile:
+    lineArray = line.split('\t')
+    confidenceMap[lineArray[0]] = float(lineArray[1])
+confidenceFile.close()
+
 # grab some user metadata from here
 metaData = open('userMetadata.txt', 'r').readlines()
 userRiskLevels = {}
@@ -54,15 +62,27 @@ for n in range(1, 15):
         postArray = line.split('\t')
         # check if this post is by a moderator, and if so skip building a conversation set on it;
         # assume that moderators are not users of interest and just flood the data with greenToGreen cases
-        if postArray[5] == 'T\n':
+        if postArray[5] == 'T':
+            lineNumber += 1
+            continue
+        # check if this post is in the "Turning negatives into positives" thread and if so,
+        # ignore it because Arman's system generates a lot of false flags on those posts
+        if postArray[7] == 'T\n':
             lineNumber += 1
             continue
         postDate = getDate(postArray[0])
         postID = postArray[1]
-        if postID in labelMap:
-            postLabel = labelMap[postID]
+        postLabel = ''
+        # only start a conversation set using this post if we have a high confidence label for it
+        if postID in labelMap and postID in confidenceMap:
+            if confidenceMap[postID] >= 0.7:
+                postLabel = labelMap[postID]
+            else:
+                lineNumber += 1
+                continue
         else:
-            postLabel = '?'
+            lineNumber += 1
+            continue
         postUser = postArray[2]
         postFullUser = postArray[6][:-1]
         userState = postUser + ' ' + postDate.isoformat()
@@ -117,17 +137,28 @@ for n in range(1, 15):
             conversationSets[userState][8] = blob.sentiment.subjectivity
         replyTextList = [i for i in word_tokenize(replyText2.lower()) if i not in stops]
         conversationSets[userState][1] = ' '.join(replyTextList)
-        # find the user's next reply after N days and get that label
+        # find the user's posts between days N to N+7 and make the conversationSet
+        # end-state flagged if any post is flagged
         searchDistance = 1
         while(True):
             potentialNextPost = postsFile[lineNumber + searchDistance].split('\t')
+            # if we're in the next post window
             if (getDate(potentialNextPost[0]) - postDate).days > n:
-                if potentialNextPost[2] == postUser:
-                    if potentialNextPost[1] in labelMap:
+               # if it's the target user and the post isn't in "Turning negatives into positives"
+               if potentialNextPost[2] == postUser and potentialNextPost[7] == 'F\n':
+                    # if we have Arman's label for this post, capture it
+                    if potentialNextPost[1] in labelMap and potentialNextPost[1] in confidenceMap:
                         conversationSets[userState][1] += ' ' + str(potentialNextPost[1])
-                        conversationSets[userState][2] = labelMap[potentialNextPost[1]]
-                        break
-            # give up on the search for the next post if it's been more than a week
+                        # get the first label found, whatever it is
+                        if conversationSets[userState][2] == '?':
+                            # but only if the label is high confidence
+                            if confidenceMap[potentialNextPost[1]] >= 0.9:
+                                conversationSets[userState][2] = labelMap[potentialNextPost[1]]
+                        # update the end-state label if we find a flagged post later
+                        elif conversationSets[userState][2] == 'green' and labelMap[potentialNextPost[1]] == 'flagged':
+                            if confidenceMap[potentialNextPost[1]] >= 0.70:
+                                conversationSets[userState][2] = 'flagged'
+            # stop searching after a week
             if (getDate(potentialNextPost[0]) - postDate).days > n + 7:
                 break
             searchDistance += 1
