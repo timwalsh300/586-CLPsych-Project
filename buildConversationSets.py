@@ -154,7 +154,7 @@ for n in range(1, 15):
                         # get the first label found, whatever it is
                         if conversationSets[userState][2] == '?':
                             # but only if the label is high confidence
-                            if confidenceMap[potentialNextPost[1]] >= 0.9:
+                            if confidenceMap[potentialNextPost[1]] >= 0.7:
                                 conversationSets[userState][2] = labelMap[potentialNextPost[1]]
                         # update the end-state label if we find a flagged post later
                         elif conversationSets[userState][2] == 'green' and labelMap[potentialNextPost[1]] == 'flagged':
