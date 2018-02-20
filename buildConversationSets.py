@@ -21,12 +21,29 @@ for line in labelsFile:
     labelMap[lineArray[0]] = label
 labelsFile.close()
 
-# this gets Arman's confidence values for each label
+# this gets the list of manual labels
+manualLabelFile = open('manualLabels.tsv', 'r')
+manualLabelList = []
+for line in manualLabelFile:
+    lineArray = line.split('\t')
+    manualLabelList.append(lineArray[0])
+    label = ''
+    if lineArray[1] == 'green':
+        label = 'green'
+    # the binary green/flagged accuracy is like 98%, so we'll use that
+    elif lineArray[1] == 'amber' or lineArray[1] == 'red' or lineArray[1] == 'crisis':
+        label = 'flagged'
+    labelMap[lineArray[0]] = label
+manualLabelFile.close()
+
+# this gets confidence value for each label
 confidenceFile = open('confidence.tsv', 'r')
 confidenceMap = {}
 for line in confidenceFile:
     lineArray = line.split('\t')
     confidenceMap[lineArray[0]] = float(lineArray[1])
+for line in manualLabelList:
+    confidenceMap[line] = 1
 confidenceFile.close()
 
 # grab some user metadata from here
