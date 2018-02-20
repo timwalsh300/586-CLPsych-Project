@@ -96,7 +96,8 @@ for n in range(1, 15):
         else: # if not, record the new user on this day
             conversationSets[userState] = [postLabel, '', '?', 0, 0, 0, 0.07, 0.0, 0.5]
         # string to append text of replies to this user as we find them
-        replyText = postID + ' '
+        # for error analysis, put in the post ID that gave us initial state
+        replyText = ''
         numReplies = 0
         numModReplies = 0
         # this captures the activity level of the target user over the N day period
@@ -148,7 +149,8 @@ for n in range(1, 15):
                if potentialNextPost[2] == postUser and potentialNextPost[7] == 'F\n':
                     # if we have Arman's label for this post, capture it
                     if potentialNextPost[1] in labelMap and potentialNextPost[1] in confidenceMap:
-                        conversationSets[userState][1] += ' ' + str(potentialNextPost[1])
+                        # the following line was for error analysis
+                        # conversationSets[userState][1] += ' ' + str(potentialNextPost[1])
                         # get the first label found, whatever it is
                         if conversationSets[userState][2] == '?':
                             # but only if the label is high confidence
